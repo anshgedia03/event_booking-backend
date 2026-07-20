@@ -1,0 +1,19 @@
+/**
+ * Standardized API response wrapper.
+ * Ensures all API responses follow a consistent shape.
+ */
+class ApiResponse<T> {
+  public readonly success: boolean;
+  public readonly statusCode: number;
+  public readonly message: string;
+  public readonly data: T | null;
+
+  constructor(statusCode: number, message: string, data: T | null = null) {
+    this.statusCode = statusCode;
+    this.success = statusCode >= 200 && statusCode < 300;
+    this.message = message;
+    this.data = data;
+  }
+}
+
+export default ApiResponse;
