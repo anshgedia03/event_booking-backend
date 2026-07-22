@@ -240,7 +240,21 @@ export const cancelBooking = async (
       throw new ApiError(400, 'This booking is already cancelled');
     }
 
-    // 2. Mark as cancelled
+    // 2. Fetch the linked event to validate the cancellation window
+    const event = await Event.findById(booking.eventId).session(session);
+    if (!event) {
+      throw new ApiError(404, 'The event linked to this booking could not be found');
+    }
+
+    // Block cancellation if the event date has already passed
+    if (event.date && event.date < new Date()) {
+      throw new ApiError(
+        400,
+        'This event has already taken place. Cancellations are not allowed for past events.',
+      );
+    }
+
+    // 3. Mark as cancelled
     booking.status = 'cancelled';
     await booking.save({ session });
 
