@@ -5,6 +5,7 @@ import connectDB from './config/database';
 import authRoutes from './routes/auth.routes';
 import eventRoutes from './routes/event.routes';
 import bookingRoutes from './routes/booking.routes';
+import paymentRoutes from './routes/payment.routes';
 import profileRoutes from './routes/profile.routes';
 import errorHandler from './middlewares/errorHandler';
 
@@ -23,6 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use('/api/profile', profileRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
