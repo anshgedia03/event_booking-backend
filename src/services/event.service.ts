@@ -37,6 +37,15 @@ export const queryEvents = async (
     filter.title = { $regex: query.search, $options: 'i' };
   }
 
+  // Filter by date relative to the current moment
+  const now = new Date();
+  if (query.status === 'upcoming') {
+    filter.date = { $gte: now };
+  } else if (query.status === 'past') {
+    filter.date = { $lt: now };
+  }
+  // 'all' (default) — no date filter applied
+
   const page = query.page;
   const limit = query.limit;
   const skip = (page - 1) * limit;

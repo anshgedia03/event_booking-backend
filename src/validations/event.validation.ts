@@ -6,6 +6,10 @@ export const getEventsQuerySchema = z
     category: z.string().trim().toLowerCase().optional(),
     search: z.string().trim().optional(),
 
+    // Filter by event date relative to now
+    // 'upcoming' → date >= now, 'past' → date < now, 'all' → no date filter
+    status: z.enum(['upcoming', 'past', 'all']).default('all'),
+
     // Pagination — coerce string query params to numbers
     page: z.coerce
       .number({ error: 'page must be a number' })
