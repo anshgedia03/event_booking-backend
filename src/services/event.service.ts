@@ -26,6 +26,7 @@ export const queryEvents = async (
   query: GetEventsQuery,
 ): Promise<PaginatedEvents> => {
   const filter: Record<string, any> = {};
+  let sort: Record<string, 1 | -1> = { date: 1 };
 
   // 'all' is the client's way of saying "no category filter"
   if (query.category && query.category !== 'all') {
@@ -46,13 +47,19 @@ export const queryEvents = async (
   }
   // 'all' (default) — no date filter applied
 
+  if (query.sort === 'price_asc') {
+    sort = { price: 1, date: 1 };
+  } else if (query.sort === 'price_desc') {
+    sort = { price: -1, date: 1 };
+  }
+
   const page = query.page;
   const limit = query.limit;
   const skip = (page - 1) * limit;
 
   // Run query + count in parallel for efficiency
   const [events, total] = await Promise.all([
-    Event.find(filter).sort({ date: 1 }).skip(skip).limit(limit),
+    Event.find(filter).sort(sort).skip(skip).limit(limit),
     Event.countDocuments(filter),
   ]);
 
@@ -89,4 +96,3 @@ export const getEventById = async (id: string): Promise<IEvent> => {
 
   return event;
 };
-

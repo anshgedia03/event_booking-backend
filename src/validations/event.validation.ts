@@ -6,6 +6,9 @@ export const getEventsQuerySchema = z
     category: z.string().trim().toLowerCase().optional(),
     search: z.string().trim().optional(),
 
+    // Event sorting — default keeps the existing date-first behavior
+    sort: z.enum(['date', 'price_asc', 'price_desc']).default('date'),
+
     // Filter by event date relative to now
     // 'upcoming' → date >= now, 'past' → date < now, 'all' → no date filter
     status: z.enum(['upcoming', 'past', 'all']).default('all'),

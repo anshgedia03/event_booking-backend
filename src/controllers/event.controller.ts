@@ -11,6 +11,7 @@ import ApiError from '../utils/ApiError';
  * Query params:
  *   category  – specific category or 'all' (default: all)
  *   search    – title substring search (case-insensitive)
+ *   sort      – 'date' | 'price_asc' | 'price_desc' (default: date)
  *   page      – page number, 1-indexed (default: 1)
  *   limit     – items per page (default: 6, max: 50)
  */
@@ -67,4 +68,3 @@ export const getEventDetails = async (
     next(error);
   }
 };
-
