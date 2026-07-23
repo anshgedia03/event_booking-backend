@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { register, login } from '../controllers/auth.controller';
+import { register, login, changePassword } from '../controllers/auth.controller';
+import authenticate from '../middlewares/authenticate';
 
 const router = Router();
 
@@ -16,6 +17,13 @@ router.post('/register', register);
  * @access  Public
  */
 router.post('/login', login);
+
+/**
+ * @route   PATCH /api/auth/change-password
+ * @desc    Change the authenticated user's password
+ * @access  Private (Requires valid access token)
+ */
+router.patch('/change-password', authenticate, changePassword);
 
 export default router;
 

@@ -1,6 +1,6 @@
 import User from '../models/user.model';
 import ApiError from '../utils/ApiError';
-import type { RegisterInput, LoginInput } from '../validations/auth.validation';
+import type { RegisterInput, LoginInput, ChangePasswordInput } from '../validations/auth.validation';
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt.utils';
 
 export interface RegisterResult {
@@ -67,16 +67,15 @@ export const loginUser = async (input: LoginInput): Promise<LoginResult> => {
   // 1. Find user — explicitly re-include password (it has select:false on schema)
   const user = await User.findOne({ email }).select('+password');
 
-  // 2. Generic error for both "not found" and "wrong password" (anti-enumeration)
-  const INVALID_CREDENTIALS = 'Invalid email or password';
+  // 2. Specific error if user is not found (as requested)
   if (!user) {
-    throw new ApiError(401, INVALID_CREDENTIALS);
+    throw new ApiError(404, 'User does not exist, please signup first');
   }
 
   // 3. Timing-safe password comparison via bcrypt
   const isPasswordValid = await user.comparePassword(password);
   if (!isPasswordValid) {
-    throw new ApiError(401, INVALID_CREDENTIALS);
+    throw new ApiError(401, 'Invalid email or password');
   }
 
   // 4. Generate token pair
@@ -95,4 +94,38 @@ export const loginUser = async (input: LoginInput): Promise<LoginResult> => {
     },
   };
 };
+
+/**
+ * @description Change an authenticated user's password.
+ * - Verifies the current password
+ * - Updates to the new password (triggering the bcrypt pre-save hook)
+ */
+export const changePassword = async (
+  userId: string,
+  input: ChangePasswordInput,
+): Promise<void> => {
+  const { currentPassword, newPassword } = input;
+
+  // 1. Find user and explicitly select the password field
+  const user = await User.findById(userId).select('+password');
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  // 2. Verify current password
+  const isPasswordValid = await user.comparePassword(currentPassword);
+  if (!isPasswordValid) {
+    throw new ApiError(401, 'Incorrect current password');
+  }
+
+  // 3. Ensure the new password is not the same as the old one
+  if (currentPassword === newPassword) {
+    throw new ApiError(400, 'New password must be different from the current password');
+  }
+
+  // 4. Update password and save (mongoose pre-save hook handles hashing)
+  user.password = newPassword;
+  await user.save();
+};
+
 

@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import { registerSchema, loginSchema } from '../validations/auth.validation';
-import { registerUser, loginUser } from '../services/auth.service';
+import { registerSchema, loginSchema, changePasswordSchema } from '../validations/auth.validation';
+import { registerUser, loginUser, changePassword as changePasswordService } from '../services/auth.service';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 
@@ -78,4 +78,44 @@ export const login = async (
     next(error);
   }
 };
+
+/**
+ * @description PATCH /api/auth/change-password
+ * Change the authenticated user's password.
+ * Requires auth middleware to extract req.userId
+ */
+export const changePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    // 1. Ensure user is authenticated (req.userId is set by authenticate middleware)
+    if (!req.userId) {
+      next(new ApiError(401, 'Unauthorized access'));
+      return;
+    }
+
+    // 2. Validate request body
+    const parsed = changePasswordSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      const errors = parsed.error.issues.map((issue) => ({
+        field: issue.path.join('.') || 'body',
+        message: issue.message,
+      }));
+      next(new ApiError(400, 'Validation failed', errors));
+      return;
+    }
+
+    // 3. Delegate to service layer
+    await changePasswordService(req.userId, parsed.data);
+
+    // 4. Return success response
+    res.status(200).json(new ApiResponse(200, 'Password changed successfully'));
+  } catch (error) {
+    next(error);
+  }
+};
+
 
