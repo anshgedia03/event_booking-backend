@@ -53,7 +53,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 // ─── Change Password ──────────────────────────────────────────────────────────
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Current password is required'),
+    currentPassword: z.string().optional(),
 
     newPassword: z
       .string()
@@ -75,3 +75,12 @@ export const changePasswordSchema = z
   });
 
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
+// ─── Google Auth ──────────────────────────────────────────────────────────────
+export const googleAuthSchema = z
+  .object({
+    idToken: z.string().min(1, 'ID Token is required'),
+  })
+  .strict();
+
+export type GoogleAuthInput = z.infer<typeof googleAuthSchema>;

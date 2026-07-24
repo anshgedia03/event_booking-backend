@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import { registerSchema, loginSchema, changePasswordSchema } from '../validations/auth.validation';
-import { registerUser, loginUser, changePassword as changePasswordService } from '../services/auth.service';
+import { registerSchema, loginSchema, changePasswordSchema, googleAuthSchema } from '../validations/auth.validation';
+import { registerUser, loginUser, changePassword as changePasswordService, googleLoginUser } from '../services/auth.service';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
 
@@ -118,4 +118,34 @@ export const changePassword = async (
   }
 };
 
+/**
+ * @description POST /api/auth/google
+ * Authenticate a user via Google ID Token and return an access + refresh token pair.
+ */
+export const googleLogin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    // 1. Validate request body
+    const parsed = googleAuthSchema.safeParse(req.body);
 
+    if (!parsed.success) {
+      const errors = parsed.error.issues.map((issue) => ({
+        field: issue.path.join('.') || 'body',
+        message: issue.message,
+      }));
+      next(new ApiError(400, 'Validation failed', errors));
+      return;
+    }
+
+    // 2. Delegate to service (token verification + db lookup/creation)
+    const result = await googleLoginUser(parsed.data);
+
+    // 3. Return 200 with token pair + sanitized user
+    res.status(200).json(new ApiResponse(200, 'Google login successful', result));
+  } catch (error) {
+    next(error);
+  }
+};

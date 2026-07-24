@@ -21,15 +21,24 @@ export const getProfileController = async (
       return;
     }
 
-    // Fetch user from DB, only selecting name and email
-    const user = await User.findById(userId).select('name email');
+    // Fetch user from DB, including password so we can check if it exists
+    const user = await User.findById(userId).select('name email +password');
 
     if (!user) {
       next(new ApiError(404, 'User profile not found'));
       return;
     }
 
-    res.status(200).json(new ApiResponse(200, 'User profile retrieved successfully', user));
+    const hasPassword = !!user.password;
+
+    res.status(200).json(
+      new ApiResponse(200, 'User profile retrieved successfully', {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        hasPassword,
+      }),
+    );
   } catch (error) {
     next(error);
   }

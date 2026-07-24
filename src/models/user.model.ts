@@ -4,7 +4,8 @@ import bcrypt from 'bcryptjs';
 export interface IUser extends Document {
   name: string;
   email: string;
-  password: string;
+  password?: string;
+  googleId?: string;
   bookings: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
@@ -30,9 +31,14 @@ const UserSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: false,
       minlength: [8, 'Password must be at least 8 characters'],
       select: false, // Never return password in queries by default
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
     bookings: [
       {
@@ -48,8 +54,8 @@ const UserSchema = new Schema<IUser>(
 
 // Pre-save hook: Hash password before saving
 UserSchema.pre<IUser>('save', async function () {
-  // Only hash if the password was actually modified
-  if (!this.isModified('password')) return;
+  // Only hash if the password exists and was actually modified
+  if (!this.password || !this.isModified('password')) return;
 
   const saltRounds = 12;
   this.password = await bcrypt.hash(this.password, saltRounds);
@@ -59,6 +65,7 @@ UserSchema.pre<IUser>('save', async function () {
 UserSchema.methods.comparePassword = async function (
   candidatePassword: string,
 ): Promise<boolean> {
+  if (!this.password) return false;
   return bcrypt.compare(candidatePassword, this.password as string);
 };
 

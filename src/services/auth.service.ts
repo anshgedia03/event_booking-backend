@@ -1,7 +1,10 @@
 import User from '../models/user.model';
 import ApiError from '../utils/ApiError';
-import type { RegisterInput, LoginInput, ChangePasswordInput } from '../validations/auth.validation';
+import type { RegisterInput, LoginInput, ChangePasswordInput, GoogleAuthInput } from '../validations/auth.validation';
 import { generateAccessToken, generateRefreshToken } from '../utils/jwt.utils';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export interface RegisterResult {
   _id: string;
@@ -112,20 +115,79 @@ export const changePassword = async (
     throw new ApiError(404, 'User not found');
   }
 
-  // 2. Verify current password
-  const isPasswordValid = await user.comparePassword(currentPassword);
-  if (!isPasswordValid) {
-    throw new ApiError(401, 'Incorrect current password');
+  // 2. If the user already has a password, we must verify currentPassword
+  if (user.password) {
+    if (!currentPassword) {
+      throw new ApiError(400, 'Current password is required to change it');
+    }
+
+    const isPasswordValid = await user.comparePassword(currentPassword);
+    if (!isPasswordValid) {
+      throw new ApiError(401, 'Incorrect current password');
+    }
+
+    // Ensure the new password is not the same as the old one
+    if (currentPassword === newPassword) {
+      throw new ApiError(400, 'New password must be different from the current password');
+    }
   }
 
-  // 3. Ensure the new password is not the same as the old one
-  if (currentPassword === newPassword) {
-    throw new ApiError(400, 'New password must be different from the current password');
-  }
-
-  // 4. Update password and save (mongoose pre-save hook handles hashing)
+  // 3. Update password and save (mongoose pre-save hook handles hashing)
   user.password = newPassword;
   await user.save();
+};
+
+/**
+ * @description Login or register a user via Google OAuth.
+ */
+export const googleLoginUser = async (input: GoogleAuthInput): Promise<LoginResult> => {
+  const { idToken } = input;
+
+  // 1. Verify the ID token with Google
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+  if (!payload || !payload.email || !payload.sub) {
+    throw new ApiError(401, 'Invalid Google ID token');
+  }
+
+  const { email, sub: googleId, name } = payload;
+
+  // 2. Find or create user
+  let user = await User.findOne({ email });
+
+  if (user) {
+    // If user exists but doesn't have a googleId, update it
+    if (!user.googleId) {
+      user.googleId = googleId;
+      await user.save();
+    }
+  } else {
+    // Create new user (password is now optional)
+    user = await User.create({
+      name: name || 'Google User',
+      email,
+      googleId,
+    });
+  }
+
+  // 3. Generate tokens
+  const userId = (user._id as { toString(): string }).toString();
+  const accessToken = generateAccessToken(userId);
+  const refreshToken = generateRefreshToken(userId);
+
+  return {
+    accessToken,
+    refreshToken,
+    user: {
+      _id: userId,
+      name: user.name,
+      email: user.email,
+    },
+  };
 };
 
 

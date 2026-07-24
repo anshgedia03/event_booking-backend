@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, changePassword } from '../controllers/auth.controller';
+import { register, login, changePassword, googleLogin } from '../controllers/auth.controller';
 import authenticate from '../middlewares/authenticate';
 
 const router = Router();
@@ -24,6 +24,13 @@ router.post('/login', login);
  * @access  Private (Requires valid access token)
  */
 router.patch('/change-password', authenticate, changePassword);
+
+/**
+ * @route   POST /api/auth/google
+ * @desc    Authenticate user via Google OAuth
+ * @access  Public
+ */
+router.post('/google', googleLogin);
 
 export default router;
 
