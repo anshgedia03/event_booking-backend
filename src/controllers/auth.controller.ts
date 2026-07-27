@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction } from 'express';
-import { ZodError } from 'zod';
 import { registerSchema, loginSchema, changePasswordSchema, googleAuthSchema } from '../validations/auth.validation';
 import { registerUser, loginUser, changePassword as changePasswordService, googleLoginUser } from '../services/auth.service';
 import ApiResponse from '../utils/ApiResponse';
 import ApiError from '../utils/ApiError';
+import { generateAccessToken, verifyRefreshToken } from '../utils/jwt.utils';
 
 /**
  * @description POST /api/auth/register
@@ -145,6 +145,40 @@ export const googleLogin = async (
 
     // 3. Return 200 with token pair + sanitized user
     res.status(200).json(new ApiResponse(200, 'Google login successful', result));
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @description POST /api/auth/refresh-token
+ * Validate a refresh token and issue a new short-lived access token.
+ */
+export const refreshToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { refreshToken: providedRefreshToken } = req.body as {
+      refreshToken?: string;
+    };
+
+    if (!providedRefreshToken) {
+      next(new ApiError(400, 'Refresh token is required'));
+      return;
+    }
+
+    const { userId } = verifyRefreshToken(providedRefreshToken);
+    const accessToken = generateAccessToken(userId);
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, 'Access token refreshed successfully', {
+          accessToken,
+        }),
+      );
   } catch (error) {
     next(error);
   }

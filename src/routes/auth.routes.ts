@@ -1,5 +1,11 @@
 import { Router } from 'express';
-import { register, login, changePassword, googleLogin } from '../controllers/auth.controller';
+import {
+  register,
+  login,
+  changePassword,
+  googleLogin,
+  refreshToken,
+} from '../controllers/auth.controller';
 import authenticate from '../middlewares/authenticate';
 
 const router = Router();
@@ -19,6 +25,13 @@ router.post('/register', register);
 router.post('/login', login);
 
 /**
+ * @route   POST /api/auth/refresh-token
+ * @desc    Exchange a valid refresh token for a new access token
+ * @access  Public
+ */
+router.post('/refresh-token', refreshToken);
+
+/**
  * @route   PATCH /api/auth/change-password
  * @desc    Change the authenticated user's password
  * @access  Private (Requires valid access token)
@@ -33,4 +46,3 @@ router.patch('/change-password', authenticate, changePassword);
 router.post('/google', googleLogin);
 
 export default router;
-
