@@ -1,8 +1,21 @@
 import { Router } from 'express';
-import { createBookingController, getUserBookingsController, getBookingDetailsController, cancelBookingController } from '../controllers/booking.controller';
+import { 
+  createBookingController, 
+  getUserBookingsController, 
+  getBookingDetailsController, 
+  cancelBookingController, 
+  getDigitalTicketController 
+} from '../controllers/booking.controller';
 import authenticate from '../middlewares/authenticate';
 
 const router = Router();
+
+/**
+ * @route   GET /api/bookings/:id/ticket
+ * @desc    Get a digital SVG ticket image for a specific booking
+ * @access  Public (No JWT required)
+ */
+router.get('/:id/ticket', getDigitalTicketController);
 
 /**
  * @route   POST /api/bookings

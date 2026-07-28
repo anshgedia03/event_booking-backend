@@ -203,6 +203,24 @@ export const getBookingById = async (
 };
 
 /**
+ * @description Retrieve a specific booking by its ID for public digital ticket rendering.
+ */
+export const getPublicBookingById = async (
+  bookingId: string
+): Promise<IBooking | null> => {
+  if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+    throw new ApiError(400, `'${bookingId}' is not a valid booking ID`);
+  }
+
+  const booking = await Booking.findById(bookingId).populate('eventId');
+  if (!booking) {
+    throw new ApiError(404, 'Booking not found');
+  }
+
+  return booking;
+};
+
+/**
  * @description Cancel a booking (Soft delete by changing status to 'cancelled').
  *
  * Steps:
