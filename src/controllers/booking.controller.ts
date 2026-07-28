@@ -220,15 +220,17 @@ export const getDigitalTicketController = async (
       font-family: 'Outfit', -apple-system, sans-serif;
       background-color: #f3f4f6;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
+      padding: 30px 20px;
       min-height: 100vh;
-      padding: 24px;
     }
     .ticket-wrapper {
       width: 100%;
       max-width: 400px;
       filter: drop-shadow(0 15px 35px rgba(42, 28, 164, 0.12));
+      /* Add slight padding around so the drop shadow isn't cut off when capturing image */
+      margin-bottom: 30px;
     }
     .ticket-top {
       background: linear-gradient(135deg, #5D4CE9 0%, #2A1CA4 100%);
@@ -298,10 +300,22 @@ export const getDigitalTicketController = async (
     }
     .price-value { font-size: 28px; font-weight: 800; color: #111827; }
     .tickets-value { font-size: 28px; font-weight: 800; color: #5D4CE9; }
+
+    /* Download Button */
+    .download-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background-color: #111827; color: white; border: none;
+      padding: 18px 24px; border-radius: 14px;
+      font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700;
+      cursor: pointer; width: 100%; max-width: 400px;
+      box-shadow: 0 8px 20px rgba(17, 24, 39, 0.2);
+      transition: opacity 0.2s;
+    }
+    .download-btn:active { opacity: 0.8; }
   </style>
 </head>
 <body>
-  <div class="ticket-wrapper">
+  <div class="ticket-wrapper" id="ticketContent">
     <div class="ticket-top">
       <div class="label">Evently Digital Ticket</div>
       <div class="title">${escapeXml(event.title || 'Event Ticket')}</div>
@@ -338,6 +352,53 @@ export const getDigitalTicketController = async (
       </div>
     </div>
   </div>
+
+  <button class="download-btn" id="downloadBtn">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+    Download Digital Ticket
+  </button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script>
+    document.getElementById('downloadBtn').addEventListener('click', function() {
+      const btn = this;
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = 'Generating Image...';
+      btn.style.opacity = '0.7';
+      btn.disabled = true;
+      
+      const wrapper = document.getElementById('ticketContent');
+      // Temporarily remove shadow for cleaner PNG export
+      const originalFilter = wrapper.style.filter;
+      wrapper.style.filter = 'none';
+
+      html2canvas(wrapper, {
+        scale: 3, // High-res image
+        backgroundColor: '#f3f4f6',
+        useCORS: true
+      }).then(canvas => {
+        // Restore shadow
+        wrapper.style.filter = originalFilter;
+        
+        // Trigger download
+        const link = document.createElement('a');
+        link.download = 'Evently-Ticket-${booking._id}.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        // Restore button state
+        btn.innerHTML = originalHTML;
+        btn.style.opacity = '1';
+        btn.disabled = false;
+      }).catch(err => {
+        alert('Failed to generate image');
+        btn.innerHTML = originalHTML;
+        btn.style.opacity = '1';
+        btn.disabled = false;
+        wrapper.style.filter = originalFilter;
+      });
+    });
+  </script>
 </body>
 </html>
     `.trim();
