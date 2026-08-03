@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProfileController } from '../controllers/profile.controller';
+import { getProfileController, updateFCMTokenController } from '../controllers/profile.controller';
 import authenticate from '../middlewares/authenticate';
 import { rateLimiter } from '../middlewares/rateLimiter';
 
@@ -18,5 +18,12 @@ const profileLimiter = rateLimiter('profile', {
  * @access  Protected (JWT required)
  */
 router.get('/', authenticate, profileLimiter, getProfileController);
+
+/**
+ * @route   PUT /api/profile/fcm-token
+ * @desc    Update user FCM device token
+ * @access  Protected (JWT required)
+ */
+router.put('/fcm-token', authenticate, profileLimiter, updateFCMTokenController);
 
 export default router;

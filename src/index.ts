@@ -7,6 +7,7 @@ import eventRoutes from './routes/event.routes';
 import bookingRoutes from './routes/booking.routes';
 import paymentRoutes from './routes/payment.routes';
 import profileRoutes from './routes/profile.routes';
+import fcmRoutes from './routes/fcm.routes';
 import errorHandler from './middlewares/errorHandler';
 
 // Load environment variables FIRST, before anything else
@@ -26,6 +27,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/fcm', fcmRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {

@@ -43,3 +43,36 @@ export const getProfileController = async (
     next(error);
   }
 };
+
+/**
+ * @description PUT /api/profile/fcm-token
+ * Save/update the authenticated user's FCM device token.
+ */
+export const updateFCMTokenController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.userId;
+    const { fcmToken } = req.body;
+
+    if (!userId) {
+      next(new ApiError(401, 'Authentication required'));
+      return;
+    }
+
+    if (!fcmToken) {
+      next(new ApiError(400, 'FCM token is required'));
+      return;
+    }
+
+    await User.findByIdAndUpdate(userId, { fcmToken });
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, 'FCM token updated successfully', { fcmToken }));
+  } catch (error) {
+    next(error);
+  }
+};

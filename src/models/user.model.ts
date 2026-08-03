@@ -6,6 +6,7 @@ export interface IUser extends Document {
   email: string;
   password?: string;
   googleId?: string;
+  fcmToken?: string;
   bookings: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
@@ -39,6 +40,10 @@ const UserSchema = new Schema<IUser>(
       type: String,
       unique: true,
       sparse: true,
+    },
+    fcmToken: {
+      type: String,
+      default: null,
     },
     bookings: [
       {
